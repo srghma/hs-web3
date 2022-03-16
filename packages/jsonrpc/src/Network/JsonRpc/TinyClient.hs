@@ -154,7 +154,7 @@ instance FromJSON RpcError where
                        <*> v .: "message"
                        <*> v .:? "data"
 
-data JsonRpcException = ParsingException String
+data JsonRpcException = ParsingException String -- b.c. aeson exception is string
     | CallException RpcError
     deriving (Show, Eq)
 
@@ -175,7 +175,7 @@ type MethodName = Text
 -- | JSON-RPC call monad.
 class JsonRpcM m => JsonRpc m where
     -- | Remote call of JSON-RPC method.
-    remote :: Remote m a => MethodName -> a
+    remote :: Remote m a => MethodName -> a -- default method
     {-# INLINE remote #-}
     remote = remote' . call
 
@@ -184,7 +184,7 @@ call :: JsonRpcM m
      -> [Value]
      -> m ByteString
 call m r = do
-  rid <- liftIO $ randomRIO (0, maxInt)
+  rid <- liftIO $ randomRIO (0, maxInt) -- this could be stored in state and incremeneted by 1 on every call (just like ethers.js does)
   connection . encode $ Request m (fromInteger rid) (toJSON r)
   where
     maxInt = toInteger (maxBound :: Int)
